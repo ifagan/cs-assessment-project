@@ -16,21 +16,21 @@ export interface Database {
           updated_at: string | null;
           username: string | null;
           full_name: string | null;
-          role: string | null;
+          role: Database['public']['Enums']['roles'] | null;
         };
         Insert: {
           id: string;
           updated_at?: string | null;
           username?: string | null;
           full_name?: string | null;
-          role?: string | null;
+          role?: Database['public']['Enums']['roles'] | null;
         };
         Update: {
           id?: string;
           updated_at?: string | null;
           username?: string | null;
           full_name?: string | null;
-          role?: string | null;
+          role?: Database['public']['Enums']['roles'] | null;
         };
         Relationships: [
           {
@@ -80,7 +80,7 @@ export interface Database {
           project_id: number | null; // bigint
           title: string | null;
           description: string | null;
-          due_date: string | null; // date as ISO string
+          due_date: string | null; // ISO string
           priority: Database['public']['Enums']['priorities'] | null;
           status: Database['public']['Enums']['statuses'] | null;
         };
@@ -131,9 +131,29 @@ export interface Database {
     Enums: {
       priorities: 'LOW' | 'MEDIUM' | 'HIGH';
       statuses: 'TO DO' | 'IN PROGRESS' | 'DONE';
+      roles: 'User' | 'Project manager' | 'Administrator';
     };
     CompositeTypes: {
       [_ in never]: never;
     };
   };
 }
+
+// ----------------------------------------------------
+// Utility helpers for easier imports
+// ----------------------------------------------------
+export type Profile = Database['public']['Tables']['profiles']['Row'];
+export type Project = Database['public']['Tables']['projects']['Row'];
+export type Task = Database['public']['Tables']['tasks']['Row'];
+
+export type ProfileInsert = Database['public']['Tables']['profiles']['Insert'];
+export type ProjectInsert = Database['public']['Tables']['projects']['Insert'];
+export type TaskInsert = Database['public']['Tables']['tasks']['Insert'];
+
+export type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
+export type ProjectUpdate = Database['public']['Tables']['projects']['Update'];
+export type TaskUpdate = Database['public']['Tables']['tasks']['Update'];
+
+export type Priority = Database['public']['Enums']['priorities'];
+export type Status = Database['public']['Enums']['statuses'];
+export type Role = Database['public']['Enums']['roles'];
