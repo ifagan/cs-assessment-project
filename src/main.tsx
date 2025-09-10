@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Link } from 'react-router';
+import ProjectsPage from "./ProjectsPage";
 import './index.css';
 import App from './App';
 
@@ -12,10 +13,11 @@ if (container) {
     <StrictMode>
       <BrowserRouter>
         <nav style={{ padding: "1rem" }}>
-          <Link to="/">Home</Link>
+          <Link to="/">Home</Link> | <Link to="/projects">Projects</Link>
         </nav>
         <Routes>
           <Route path="/" element={<App />} />
+          <Route path="/projects" element={<ProjectsPage />} />
         </Routes>
       </BrowserRouter>
     </StrictMode>
