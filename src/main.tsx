@@ -5,6 +5,7 @@ import ProjectsPage from "./ProjectsPage";
 import TasksPage from "./TasksPage";
 import Account from "./Account";
 import App from './App';
+import Navigation from './Navigation';
 import { SessionProvider } from './SessionContext';
 import './index.css';
 
@@ -16,9 +17,7 @@ if (container) {
     <StrictMode>
         <SessionProvider>
         <BrowserRouter>
-          <nav style={{ padding: "1rem" }}>
-            <Link to="/projects">Projects</Link> | <Link to="/tasks">Tasks</Link> | <Link to="/profile">Edit Profile</Link>
-          </nav>
+          <Navigation />
           <Routes>
             <Route path="/" element={<App />} />
             <Route path="/projects" element={<ProjectsPage />} />
