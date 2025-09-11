@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
+import { useFormWithValidation } from "./hooks/useFormWithValidation";
+import ValidationError from "./ValidationError";
 
 interface Project {
   id: number;
@@ -15,8 +17,6 @@ interface Project {
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [form, setForm] = useState({ title: "", description: "" });
-  const [newProject, setNewProject] = useState({ title: "", description: "" });
   const [userId, setUserId] = useState<string | null>(null);
 
   // Pagination + search state
@@ -25,7 +25,13 @@ export default function ProjectsPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [search, setSearch] = useState("");
 
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+
+  // ✅ Unified form for both create + edit
+  const projectForm = useFormWithValidation(
+    { title: "", description: "" },
+    ["title", "description"]
+  );
 
   useEffect(() => {
     getUser();
@@ -77,43 +83,60 @@ export default function ProjectsPage() {
   }
 
   async function addProject() {
+    if (!projectForm.validate()) return false;
     if (!userId) {
       alert("Login required to create projects.");
-      return;
+      return false;
     }
+
     const { error } = await supabase.from("projects").insert([
       {
-        title: newProject.title,
-        description: newProject.description,
+        title: projectForm.values.title.trim(),
+        description: projectForm.values.description.trim(),
         created_by: userId,
       },
     ]);
-    if (error) console.error(error.message);
-    else {
-      setNewProject({ title: "", description: "" });
-      fetchProjects();
+
+    if (error) {
+      console.error(error.message);
+      return false;
     }
+
+    projectForm.reset();
+    fetchProjects();
+    return true;
   }
 
   function startEdit(project: Project) {
     setEditingProject(project);
-    setForm({
+    projectForm.reset({
       title: project.title ?? "",
       description: project.description ?? "",
     });
+    setShowModal(true);
   }
 
   async function saveEdit() {
-    if (!editingProject) return;
+    if (!editingProject) return false;
+    if (!projectForm.validate()) return false;
+
     const { error } = await supabase
       .from("projects")
-      .update({ title: form.title, description: form.description })
+      .update({
+        title: projectForm.values.title.trim(),
+        description: projectForm.values.description.trim(),
+      })
       .eq("id", editingProject.id);
-    if (error) console.error(error.message);
-    else {
-      setEditingProject(null);
-      fetchProjects();
+
+    if (error) {
+      console.error(error.message);
+      return false;
     }
+
+    setEditingProject(null);
+    projectForm.reset();
+    fetchProjects();
+    return true;
   }
 
   async function deleteProject(id: number) {
@@ -122,14 +145,13 @@ export default function ProjectsPage() {
     else fetchProjects();
   }
 
-  // Pagination helpers
+  // pagination
   const totalPages = Math.ceil(totalCount / pageSize);
 
   return (
     <div className="max-w-5xl mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Projects</h1>
 
-      {/* Search Bar */}
       <div className="flex items-center justify-between mb-4">
         <input
           className="form-input w-64"
@@ -146,98 +168,100 @@ export default function ProjectsPage() {
         </span>
       </div>
 
-{/* Mobile: Card layout */}
-<div className="grid gap-4 sm:hidden">
-  {projects.map((p) => (
-    <div key={p.id} className="bg-white shadow rounded-lg p-4">
-      <h3 className="text-lg font-semibold">{p.title}</h3>
-      <p className="text-gray-600">{p.description}</p>
-      <p className="text-sm text-gray-500">
-        Created by {p.profiles?.username ?? "Unknown"}
-      </p>
-      <p className="text-sm text-gray-500">
-        Created at {new Date(p.created_at).toLocaleDateString()}
-      </p>
+      {/* Mobile layout */}
+      <div className="grid gap-4 sm:hidden">
+        {projects.map((p) => (
+          <div key={p.id} className="bg-white shadow rounded-lg p-4">
+            <h3 className="text-lg font-semibold">{p.title}</h3>
+            <p className="text-gray-600">{p.description}</p>
+            <p className="text-sm text-gray-500">
+              Created by {p.profiles?.username ?? "Unknown"}
+            </p>
+            <p className="text-sm text-gray-500">
+              Created at {new Date(p.created_at).toLocaleDateString()}
+            </p>
 
-      <div className="mt-3 flex space-x-2">
-        {userId === p.created_by && (
-          <>
-            <button
-              onClick={() => startEdit(p)}
-              className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => deleteProject(p.id)}
-              className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
-            >
-              Delete
-            </button>
-          </>
+            <div className="mt-3 flex space-x-2">
+              {userId === p.created_by && (
+                <>
+                  <button
+                    onClick={() => startEdit(p)}
+                    className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => deleteProject(p.id)}
+                    className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                  >
+                    Delete
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {projects.length === 0 && (
+          <p className="text-center text-gray-500">No projects found.</p>
         )}
       </div>
-    </div>
-  ))}
 
-  {projects.length === 0 && (
-    <p className="text-center text-gray-500">No projects found.</p>
-  )}
-</div>
-
-    {/* Desktop/Tablet: Table layout */}
-    <div className="hidden sm:block overflow-x-auto shadow rounded-lg">
-      <table className="min-w-full text-sm text-left text-gray-600">
-        <thead className="bg-gray-100 text-gray-700 uppercase text-xs">
-          <tr>
-            <th className="px-4 py-3">Title</th>
-            <th className="px-4 py-3">Description</th>
-            <th className="px-4 py-3">Created By</th>
-            <th className="px-4 py-3">Created At</th>
-            <th className="px-4 py-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {projects.map((p) => (
-            <tr key={p.id} className="border-b last:border-0">
-              <td className="px-4 py-3 font-medium">{p.title}</td>
-              <td className="px-4 py-3">{p.description}</td>
-              <td className="px-4 py-3">{p.profiles?.username ?? "Unknown"}</td>
-              <td className="px-4 py-3">
-                {new Date(p.created_at).toLocaleDateString()}
-              </td>
-              <td className="px-4 py-3 space-x-2">
-                {userId === p.created_by && (
-                  <>
-                    <button
-                      onClick={() => startEdit(p)}
-                      className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => deleteProject(p.id)}
-                      className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
-                    >
-                      Delete
-                    </button>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
-          {projects.length === 0 && (
+      {/* Desktop layout */}
+      <div className="hidden sm:block overflow-x-auto shadow rounded-lg">
+        <table className="min-w-full text-sm text-left text-gray-600">
+          <thead className="bg-gray-100 text-gray-700 uppercase text-xs">
             <tr>
-              <td colSpan={5} className="px-4 py-3 text-center text-gray-500">
-                No projects found.
-              </td>
+              <th className="px-4 py-3">Title</th>
+              <th className="px-4 py-3">Description</th>
+              <th className="px-4 py-3">Created By</th>
+              <th className="px-4 py-3">Created At</th>
+              <th className="px-4 py-3">Actions</th>
             </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {projects.map((p) => (
+              <tr key={p.id} className="border-b last:border-0">
+                <td className="px-4 py-3 font-medium">{p.title}</td>
+                <td className="px-4 py-3">{p.description}</td>
+                <td className="px-4 py-3">
+                  {p.profiles?.username ?? "Unknown"}
+                </td>
+                <td className="px-4 py-3">
+                  {new Date(p.created_at).toLocaleDateString()}
+                </td>
+                <td className="px-4 py-3 space-x-2">
+                  {userId === p.created_by && (
+                    <>
+                      <button
+                        onClick={() => startEdit(p)}
+                        className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => deleteProject(p.id)}
+                        className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
+                </td>
+              </tr>
+            ))}
+            {projects.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-4 py-3 text-center text-gray-500">
+                  No projects found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
-      {/* Pagination Controls */}
+      {/* pagination buttons */}
       <div className="flex justify-between items-center mb-8">
         <button
           onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -258,41 +282,63 @@ export default function ProjectsPage() {
         </button>
       </div>
 
-      {/* Create New Project Button */}
+      {/* New Project Button */}
       <div className="mb-6">
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => {
+            setEditingProject(null); // new project
+            projectForm.reset();
+            setShowModal(true);
+          }}
           className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
         >
           + New Project
         </button>
       </div>
 
-      {/* Edit Modal */}
-      {editingProject && (
+      {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="modal">
-            <h2 className="text-xl font-semibold mb-4">Edit Project</h2>
+            <h2 className="text-xl font-semibold mb-4">
+              {editingProject ? "Edit Project" : "Create New Project"}
+            </h2>
+
             <input
-              className="form-input mb-3"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              className="form-input mb-1"
+              value={projectForm.values.title}
+              onChange={(e) => projectForm.handleChange("title", e.target.value)}
               placeholder="Title"
             />
+            <ValidationError message={projectForm.errors.title} />
+
             <textarea
-              className="form-input mb-3"
-              value={form.description}
+              className="form-input mb-1"
+              value={projectForm.values.description}
               onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
+                projectForm.handleChange("description", e.target.value)
               }
               placeholder="Description"
             />
+            <ValidationError message={projectForm.errors.description} />
+
             <div className="flex justify-end space-x-2">
-              <button onClick={saveEdit} className="btn-primary">
-                Save
+              <button
+                onClick={async () => {
+                  const ok = editingProject
+                    ? await saveEdit()
+                    : await addProject();
+                  if (ok) setShowModal(false);
+                }}
+                className="btn-primary"
+              >
+                {editingProject ? "Save" : "Add Project"}
               </button>
               <button
-                onClick={() => setEditingProject(null)}
+                onClick={() => {
+                  projectForm.reset();
+                  setEditingProject(null);
+                  setShowModal(false);
+                }}
                 className="btn-secondary"
               >
                 Cancel
@@ -301,47 +347,6 @@ export default function ProjectsPage() {
           </div>
         </div>
       )}
-
-      {/* Create Project Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Create New Project</h2>
-            <input
-              className="w-full border rounded-md p-2 mb-3"
-              value={newProject.title}
-              onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
-              placeholder="Project title"
-            />
-            <textarea
-              className="w-full border rounded-md p-2 mb-3"
-              value={newProject.description}
-              onChange={(e) =>
-                setNewProject({ ...newProject, description: e.target.value })
-              }
-              placeholder="Project description"
-            />
-            <div className="flex justify-end space-x-2">
-              <button
-                onClick={async () => {
-                  await addProject();
-                  setShowCreateModal(false);
-                }}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              >
-                Add Project
-              </button>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }
