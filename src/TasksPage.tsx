@@ -364,7 +364,7 @@ export default function TasksPage() {
             <option value="">All Statuses</option>
             <option value="TO DO">To Do</option>
             <option value="IN PROGRESS">In Progress</option>
-            <option value="DONE">Done</option>
+            <option value="COMPLETE">Complete</option>
           </select>
 
           <select
@@ -635,7 +635,7 @@ export default function TasksPage() {
             >
               <option value="TO DO">To Do</option>
               <option value="IN PROGRESS">In Progress</option>
-              <option value="DONE">Done</option>
+              <option value="COMPLETE">Complete</option>
             </select>
 
             {/* Project */}
