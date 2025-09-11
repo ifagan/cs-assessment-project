@@ -1,32 +1,22 @@
 import './App.css';
-import { useState, useEffect } from 'react';
-import { Session } from '@supabase/supabase-js';
-import { supabase } from './supabaseClient';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import Auth from './Auth';
-import Account from './Account';
+import { useSession } from './SessionContext';
 
 function App() {
-  const [session, setSession] = useState<Session | null>(null);
+  const { session, loading } = useSession();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+    if (!loading && session) {
+      navigate('/tasks'); // ✅ redirect logged in users
+    }
+  }, [session, loading, navigate]);
 
   return (
     <div className="container" style={{ padding: '50px 0 100px 0' }}>
-      {!session ? <Auth /> : <Account key={session.user.id} session={session} />}
+      {!session ? <Auth /> : null}
     </div>
   );
 }

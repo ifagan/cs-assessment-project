@@ -1,19 +1,17 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
-import { Session } from '@supabase/supabase-js';
-
-interface AccountProps {
-  session: Session;
-}
+import { useSession } from './SessionContext';
 
 type Role = 'User' | 'Project manager' | 'Administrator';
 
-export default function Account({ session }: AccountProps) {
+export default function Account() {
+  const { session } = useSession();
   const [loading, setLoading] = useState<boolean>(true);
   const [username, setUsername] = useState<string | null>(null);
   const [role, setRole] = useState<Role>('User');
 
   useEffect(() => {
+    if (!session) return;
     let ignore = false;
 
     async function getProfile() {
@@ -46,6 +44,7 @@ export default function Account({ session }: AccountProps) {
 
   async function updateProfile(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!session) return;
 
     setLoading(true);
     const { user } = session;
@@ -64,6 +63,10 @@ export default function Account({ session }: AccountProps) {
     }
 
     setLoading(false);
+  }
+
+  if (!session) {
+    return <p>You must be logged in to edit your profile.</p>;
   }
 
   return (

@@ -191,7 +191,11 @@ export default function ProjectsPage() {
                     Edit
                   </button>
                   <button
-                    onClick={() => deleteProject(p.id)}
+                    onClick={() => {
+                      if (window.confirm("Are you sure you want to delete this project?")) {
+                        deleteProject(p.id);
+                      }
+                    }}
                     className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
                   >
                     Delete
@@ -240,7 +244,11 @@ export default function ProjectsPage() {
                         Edit
                       </button>
                       <button
-                        onClick={() => deleteProject(p.id)}
+                        onClick={() => {
+                          if (window.confirm("Are you sure you want to delete this project?")) {
+                            deleteProject(p.id);
+                          }
+                        }}
                         className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
                       >
                         Delete
