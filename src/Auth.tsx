@@ -23,7 +23,7 @@ export default function Auth() {
     <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
       <div className="w-full max-w-md card">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          CommunityShare assessment task management app
+          CommunityShare task management app
         </h1>
         <p className="text-sm text-gray-600 mb-6">
           Sign in via magic link with your email below
