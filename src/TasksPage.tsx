@@ -411,12 +411,16 @@ export default function TasksPage() {
 					return (
           <div key={t.id} className="bg-white shadow rounded-lg p-4">
             <h3 className="text-lg font-semibold">
-              <button
-                onClick={() => startEdit(t)}
-                className="cursor-pointer hover:text-blue-700"
-              >
-                {t.title}
-              </button>
+							{canManage ? (
+								<button
+									onClick={() => startEdit(t)}
+									className="cursor-pointer hover:text-blue-700"
+								>
+									{t.title}
+								</button>
+							) : (
+								<span>{t.title}</span>
+							)}
             </h3>
             <p className="text-gray-600 mb-2">{t.description}</p>
 
@@ -496,12 +500,16 @@ export default function TasksPage() {
 							return (
 							<tr key={t.id} className="border-b last:border-0">
                 <td className="px-4 py-3 font-medium">
-                  <button
-                    onClick={() => startEdit(t)}
-                    className="cursor-pointer hover:text-blue-700"
-                  >
-                    {t.title}
-                  </button>
+									{canManage ? (
+										<button
+											onClick={() => startEdit(t)}
+											className="cursor-pointer hover:text-blue-700"
+										>
+											{t.title}
+										</button>
+									) : (
+										<span>{t.title}</span>
+									)}
                 </td>
                 <td className="px-4 py-3">{t.description}</td>
                 <td className="px-4 py-3">{t.projects?.title ?? "—"}</td>
