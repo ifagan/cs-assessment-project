@@ -6,69 +6,70 @@ import ValidationError from "./ValidationError";
 import { useLocation } from "react-router";
 
 interface Task {
-  id: number;
-  title: string | null;
-  description: string | null;
-  due_date: string | null;
-  priority: string | null;
-  status: string | null;
-  created_by: string | null;
-  created_at: string;
-  project_id: number | null;
-  projects?: { title: string | null };
-  profiles?: { username: string | null }; // creator
-  tasks_assigned_users?: { profiles?: { username: string | null; id: string } }[];
+	id: number;
+	title: string | null;
+	description: string | null;
+	due_date: string | null;
+	priority: string | null;
+	status: string | null;
+	created_by: string | null;
+	created_at: string;
+	project_id: number | null;
+	projects?: { title: string | null };
+	profiles?: { username: string | null }; // creator
+	tasks_assigned_users?: { profiles?: { username: string | null; id: string } }[];
 }
 
 interface Project {
-  id: number;
-  title: string | null;
+	id: number;
+	title: string | null;
 }
 
 interface UserProfile {
-  id: string;
-  username: string | null;
+		id: string;
+		username: string | null;
 }
 
 export default function TasksPage() {
-  const { session } = useSession();
+	const { session } = useSession();
 
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [users, setUsers] = useState<UserProfile[]>([]);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
+	const [tasks, setTasks] = useState<Task[]>([]);
+	const [projects, setProjects] = useState<Project[]>([]);
+	const [users, setUsers] = useState<UserProfile[]>([]);
+	const [editingTask, setEditingTask] = useState<Task | null>(null);
+	const [userId, setUserId] = useState<string | null>(null);
+	const [role, setRole] = useState<string | null>(null);
 
-  // Pagination + filters
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(5);
-  const [totalCount, setTotalCount] = useState(0);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [priorityFilter, setPriorityFilter] = useState<string>("");
-  const [assignedFilter, setAssignedFilter] = useState<string>("");
+	// Pagination + filters
+	const [page, setPage] = useState(1);
+	const [pageSize] = useState(5);
+	const [totalCount, setTotalCount] = useState(0);
+	const [search, setSearch] = useState("");
+	const [statusFilter, setStatusFilter] = useState<string>("");
+	const [priorityFilter, setPriorityFilter] = useState<string>("");
+	const [assignedFilter, setAssignedFilter] = useState<string>("");
 
-  const location = useLocation();
-  const params = new URLSearchParams(location.search);
-  const initialProject = params.get("project") ?? "";
-  const [projectFilter, setProjectFilter] = useState<string>(initialProject);
+	const location = useLocation();
+	const params = new URLSearchParams(location.search);
+	const initialProject = params.get("project") ?? "";
+	const [projectFilter, setProjectFilter] = useState<string>(initialProject);
 
-  // Single combined modal
-  const [showModal, setShowModal] = useState(false);
+	// Single combined modal
+	const [showModal, setShowModal] = useState(false);
 
-  // ✅ Unified form for both Create + Edit
-  const taskForm = useFormWithValidation(
-    {
-      title: "",
-      description: "",
-      due_date: "",
-      priority: "MEDIUM",
-      status: "TO DO",
-      project_id: "",
-      assigned_user: "",
-    },
-    ["title", "description", "project_id", "due_date"]
-  );
+	// ✅ Unified form for both Create + Edit
+	const taskForm = useFormWithValidation(
+		{
+			title: "",
+			description: "",
+			due_date: "",
+			priority: "MEDIUM",
+			status: "TO DO",
+			project_id: "",
+			assigned_user: "",
+		},
+		["title", "description", "project_id", "due_date"]
+	);
 
   // Load user, projects, users
   useEffect(() => {
@@ -81,6 +82,7 @@ export default function TasksPage() {
   useEffect(() => {
     if (session?.user?.id) {
       setUserId(session.user.id);
+			fetchRole(session.user.id);
     }
   }, [session]);
 
@@ -96,6 +98,20 @@ export default function TasksPage() {
     } = await supabase.auth.getUser();
     setUserId(user?.id ?? null);
   }
+
+	async function fetchRole(userId: string) {
+		const { data, error } = await supabase
+			.from("profiles")
+			.select("role")
+			.eq("id", userId)
+			.single();
+
+		if (error) {
+			console.error("Error fetching role:", error.message);
+		} else {
+			setRole(data.role);
+		}
+	}
 
   async function fetchProjects() {
     const { data, error } = await supabase.from("projects").select("id, title");
@@ -113,7 +129,6 @@ export default function TasksPage() {
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    // Keep the original behavior:
     // - When assignedFilter is set, use an inner join to require an assignee match.
     // - Otherwise, allow tasks with or without an assignee.
     const selectNoAssignee = `
@@ -225,7 +240,6 @@ export default function TasksPage() {
     return true;
   }
 
-  // Begin edit
   function startEdit(task: Task) {
     setEditingTask(task);
     taskForm.reset({
@@ -240,7 +254,6 @@ export default function TasksPage() {
     setShowModal(true);
   }
 
-  // Save edit
   async function saveEdit() {
     if (!editingTask) return false;
     if (!taskForm.validate()) return false;
@@ -390,7 +403,7 @@ export default function TasksPage() {
         </span>
       </div>
 
-      {/* Mobile: Card layout */}
+      {/* Mobile layout */}
       <div className="grid gap-4 sm:hidden">
         {tasks.map((t) => (
           <div key={t.id} className="bg-white shadow rounded-lg p-4">
@@ -429,7 +442,7 @@ export default function TasksPage() {
               </p>
             </div>
 
-            {userId === t.created_by && (
+            {(userId === t.created_by || role === "Project manager" || role === "Administrator") && (
               <div className="mt-3 flex space-x-2">
                 <button
                   onClick={() => startEdit(t)}
@@ -457,7 +470,7 @@ export default function TasksPage() {
         )}
       </div>
 
-      {/* Desktop/Tablet: Table layout */}
+      {/* Desktop layout */}
       <div className="hidden sm:block overflow-x-auto shadow rounded-lg">
         <table className="min-w-full text-sm text-left text-gray-600">
           <thead className="bg-gray-100 text-gray-700 uppercase text-xs">
@@ -494,7 +507,7 @@ export default function TasksPage() {
                 <td className="px-4 py-3">{t.status}</td>
                 <td className="px-4 py-3">{t.profiles?.username ?? "Unknown"}</td>
                 <td className="px-4 py-3 space-x-2">
-                  {userId === t.created_by && (
+                  {(userId === t.created_by || role === "Project manager" || role === "Administrator") && (
                     <>
                       <button
                         onClick={() => startEdit(t)}
@@ -569,7 +582,6 @@ export default function TasksPage() {
         </button>
       </div>
 
-      {/* Combined Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
