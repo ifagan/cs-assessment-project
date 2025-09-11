@@ -57,6 +57,7 @@ Real-time updates would be third on my list; fortunately, Supabase offers a “b
 After that, in no particular order:
 
 * A review of row-level Postgres security policies (The tools are robust, but I’m not 100% certain I have this locked down as securely as it could be. In particular, they need to be tightened up with respect to the capabilities related to elevated user privileges.)  
+* Sign-in \- right now, this is via magic link, but I’d probably move it to OAuth if I had a little more time (Supabase supports this as well as a variety of other social auth providers.)  
 * Admins should be able to create/edit/delete user profiles, including changing their privileges (I’d also remove the capability to elevate your own privileges, but for demonstration purposes it makes sense to leave that in)  
 * Right now you can’t delete a project if it has tasks assigned, which makes sense, but it doesn’t generate a useful error message.  
 * On that note, as I mentioned above, I would change any “delete” functionality to simply mark records in the database as disabled \- ensuring they don’t show up in queries, but leaving them in the system in case we need to resurrect or review them.  
