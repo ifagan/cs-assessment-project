@@ -67,7 +67,7 @@ export default function TasksPage() {
       project_id: "",
       assigned_user: "",
     },
-    ["title", "description"]
+    ["title", "description", "project_id", "due_date"]
   );
 
   // Load user, projects, users
@@ -602,6 +602,7 @@ export default function TasksPage() {
               value={taskForm.values.due_date}
               onChange={(e) => taskForm.handleChange("due_date", e.target.value)}
             />
+            <ValidationError message={taskForm.errors.due_date} />
 
             {/* Priority */}
             <select
@@ -638,6 +639,7 @@ export default function TasksPage() {
                 </option>
               ))}
             </select>
+            <ValidationError message={taskForm.errors.project_id} />
 
             {/* Assignee */}
             <select
