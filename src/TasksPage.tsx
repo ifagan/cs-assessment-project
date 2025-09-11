@@ -397,7 +397,7 @@ export default function TasksPage() {
             <h3 className="text-lg font-semibold">
               <button
                 onClick={() => startEdit(t)}
-                className="underline underline-offset-2 hover:no-underline"
+                className="cursor-pointer hover:text-blue-700"
               >
                 {t.title}
               </button>
@@ -479,7 +479,7 @@ export default function TasksPage() {
                 <td className="px-4 py-3 font-medium">
                   <button
                     onClick={() => startEdit(t)}
-                    className="underline underline-offset-2 hover:no-underline"
+                    className="cursor-pointer hover:text-blue-700"
                   >
                     {t.title}
                   </button>

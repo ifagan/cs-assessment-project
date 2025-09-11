@@ -178,7 +178,7 @@ export default function ProjectsPage() {
             <h3 className="text-lg font-semibold">
               <button
                 onClick={() => navigate(`/tasks?project=${p.id}`)}
-                className="underline underline-offset-2 hover:no-underline text-blue-600"
+                className="cursor-pointer hover:text-blue-700"
               >
                 {p.title}
               </button>
@@ -240,7 +240,7 @@ export default function ProjectsPage() {
                 <td className="px-4 py-3 font-medium">
                   <button
                     onClick={() => navigate(`/tasks?project=${p.id}`)}
-                    className="underline underline-offset-2 hover:no-underline text-blue-600"
+                    className="cursor-pointer hover:text-blue-700"
                   >
                     {p.title}
                   </button>
