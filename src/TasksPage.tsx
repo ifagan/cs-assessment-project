@@ -3,6 +3,7 @@ import { supabase } from "./supabaseClient";
 import { useSession } from "./SessionContext";
 import { useFormWithValidation } from "./hooks/useFormWithValidation";
 import ValidationError from "./ValidationError";
+import { useLocation } from "react-router";
 
 interface Task {
   id: number;
@@ -43,10 +44,14 @@ export default function TasksPage() {
   const [pageSize] = useState(5);
   const [totalCount, setTotalCount] = useState(0);
   const [search, setSearch] = useState("");
-  const [projectFilter, setProjectFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [priorityFilter, setPriorityFilter] = useState<string>("");
   const [assignedFilter, setAssignedFilter] = useState<string>("");
+
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const initialProject = params.get("project") ?? "";
+  const [projectFilter, setProjectFilter] = useState<string>(initialProject);
 
   // Single combined modal
   const [showModal, setShowModal] = useState(false);
@@ -79,7 +84,7 @@ export default function TasksPage() {
     }
   }, [session]);
 
-  // Fetch tasks when filters/pagination change
+// Fetch tasks when filters/pagination change
   useEffect(() => {
     fetchTasks();
     // eslint-disable-next-line react-hooks/exhaustive-deps

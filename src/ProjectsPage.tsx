@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import { useFormWithValidation } from "./hooks/useFormWithValidation";
 import ValidationError from "./ValidationError";
+import { useNavigate } from "react-router";
 
 interface Project {
   id: number;
@@ -26,6 +27,8 @@ export default function ProjectsPage() {
   const [search, setSearch] = useState("");
 
   const [showModal, setShowModal] = useState(false);
+
+  const navigate = useNavigate();
 
   // ✅ Unified form for both create + edit
   const projectForm = useFormWithValidation(
@@ -172,7 +175,15 @@ export default function ProjectsPage() {
       <div className="grid gap-4 sm:hidden">
         {projects.map((p) => (
           <div key={p.id} className="bg-white shadow rounded-lg p-4">
-            <h3 className="text-lg font-semibold">{p.title}</h3>
+            <h3 className="text-lg font-semibold">
+              <button
+                onClick={() => navigate(`/tasks?project=${p.id}`)}
+                className="underline underline-offset-2 hover:no-underline text-blue-600"
+              >
+                {p.title}
+              </button>
+            </h3>
+
             <p className="text-gray-600">{p.description}</p>
             <p className="text-sm text-gray-500">
               Created by {p.profiles?.username ?? "Unknown"}
@@ -226,7 +237,15 @@ export default function ProjectsPage() {
           <tbody>
             {projects.map((p) => (
               <tr key={p.id} className="border-b last:border-0">
-                <td className="px-4 py-3 font-medium">{p.title}</td>
+                <td className="px-4 py-3 font-medium">
+                  <button
+                    onClick={() => navigate(`/tasks?project=${p.id}`)}
+                    className="underline underline-offset-2 hover:no-underline text-blue-600"
+                  >
+                    {p.title}
+                  </button>
+                </td>
+
                 <td className="px-4 py-3">{p.description}</td>
                 <td className="px-4 py-3">
                   {p.profiles?.username ?? "Unknown"}
