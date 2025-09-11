@@ -405,7 +405,10 @@ export default function TasksPage() {
 
       {/* Mobile layout */}
       <div className="grid gap-4 sm:hidden">
-        {tasks.map((t) => (
+        {tasks.map((t) => {
+					const canManage = userId === t.created_by || role === "Project manager" || role === "Administrator";
+
+					return (
           <div key={t.id} className="bg-white shadow rounded-lg p-4">
             <h3 className="text-lg font-semibold">
               <button
@@ -463,7 +466,7 @@ export default function TasksPage() {
               </div>
             )}
           </div>
-        ))}
+        )})}
 
         {tasks.length === 0 && (
           <p className="text-center text-gray-500">No tasks found.</p>
@@ -487,8 +490,11 @@ export default function TasksPage() {
             </tr>
           </thead>
           <tbody>
-            {tasks.map((t) => (
-              <tr key={t.id} className="border-b last:border-0">
+            {tasks.map((t) => {
+							const canManage = userId === t.created_by || role === "Project manager" || role === "Administrator";
+
+							return (
+							<tr key={t.id} className="border-b last:border-0">
                 <td className="px-4 py-3 font-medium">
                   <button
                     onClick={() => startEdit(t)}
@@ -529,7 +535,7 @@ export default function TasksPage() {
                   )}
                 </td>
               </tr>
-            ))}
+            )})}
             {tasks.length === 0 && (
               <tr>
                 <td colSpan={9} className="px-4 py-3 text-center text-gray-500">
